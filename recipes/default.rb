@@ -89,7 +89,6 @@ case node['platform_family']
             
             notifies :restart, "service[statsd]"
         end
-    end
 end
 
 
