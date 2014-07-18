@@ -73,23 +73,23 @@ case node['platform_family']
             
             notifies :restart, "service[statsd]"
         end
-    end
     else
-    service "statsd" do
-        provider Chef::Provider::Service::Init
-        
-        restart_command "service statsd stop; service statsd start"
-        start_command "service statsd start"
-        stop_command "service statsd stop"
-        
-        supports :restart => true, :start => true, :stop => true
-    template "/etc/init.d/statsd" do
-        source "initd.conf.erb"
-        mode 0755
-        
-        notifies :restart, "service[statsd]"
+        service "statsd" do
+            provider Chef::Provider::Service::Init
+            
+            restart_command "service statsd stop; service statsd start"
+            start_command "service statsd start"
+            stop_command "service statsd stop"
+            
+            supports :restart => true, :start => true, :stop => true
+        end
+        template "/etc/init.d/statsd" do
+            source "initd.conf.erb"
+            mode 0755
+            
+            notifies :restart, "service[statsd]"
+        end
     end
-
 end
 
 
