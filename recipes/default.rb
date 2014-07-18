@@ -50,15 +50,49 @@ user node[:statsd][:user] do
   shell "/bin/false"
 end
 
-service "statsd" do
-  provider Chef::Provider::Service::Upstart
+case node['platform_family']
+    when 'ubuntu'
+        service "statsd" do
+            provider Chef::Provider::Service::Upstart
+            
+            restart_command "stop statsd; start statsd"
+            start_command "start statsd"
+            stop_command "stop statsd"
+            
+            supports :restart => true, :start => true, :stop => true
+        end
+        template "/usr/share/statsd/scripts/start" do
+            source "upstart.start.erb"
+            mode 0755
+            
+            notifies :restart, "service[statsd]"
+        end
+        template "/etc/init/statsd.conf" do
+            source "upstart.conf.erb"
+            mode 0644
+            
+            notifies :restart, "service[statsd]"
+        end
+    end
+    else
+    service "statsd" do
+        provider Chef::Provider::Service::Init
+        
+        restart_command "service statsd stop; service statsd start"
+        start_command "service statsd start"
+        stop_command "service statsd stop"
+        
+        supports :restart => true, :start => true, :stop => true
+    template "/etc/init.d/statsd" do
+        source "initd.conf.erb"
+        mode 0755
+        
+        notifies :restart, "service[statsd]"
+    end
 
-  restart_command "stop statsd; start statsd"
-  start_command "start statsd"
-  stop_command "stop statsd"
-
-  supports :restart => true, :start => true, :stop => true
 end
+
+
 
 template "/etc/statsd/config.js" do
   source "config.js.erb"
@@ -86,20 +120,6 @@ end
 
 directory "/usr/share/statsd/scripts" do
   action :create
-end
-
-template "/usr/share/statsd/scripts/start" do
-  source "upstart.start.erb"
-  mode 0755
-
-  notifies :restart, "service[statsd]"
-end
-
-template "/etc/init/statsd.conf" do
-  source "upstart.conf.erb"
-  mode 0644
-
-  notifies :restart, "service[statsd]"
 end
 
 file "#{node[:statsd][:log_file]}" do
