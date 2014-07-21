@@ -8,6 +8,10 @@
 include_recipe "nodejs"
 include_recipe "git"
 
+execute "Allow sudo without tty" do
+  command "sed -i 's/^Defaults\s*requiretty/\#&/g' /etc/sudoers"
+end
+
 git "/usr/share/statsd" do
   repository node[:statsd][:repo]
   revision node[:statsd][:version]
